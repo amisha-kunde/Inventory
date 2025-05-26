@@ -1,45 +1,75 @@
-import './App.css';
-import PropTypes from "prop-types";
-import Info from "./info.js";
+import styles from './App.module.css';
+import SearchBar from "./SearchBar"
+import AddItem from "./AddItem";
 import { useState } from "react";
+import ItemsDisplay from "./ItemsDisplay";
+
 
 function App() {
-  return (
-    <div className="App">
-      <Info />
-      <ButtonState></ButtonState>
-    </div>
-  );
-}
+  const [filters, setFilters] = useState({});
+  const [data, setData] = useState({items: [] });
 
-function ButtonState() {
-  const [title, setTitle] = useState("");
-  const [count, setCount] = useState(0);
+  const updateFilters = (searchParams) => {
+    setFilters(searchParams);
+  };
 
-  const updateTitleClicked = () => {
-    setTitle("We now have a title!");
+  const addItemToData = (item) => {
+    let items = data["items"];
+    item.id = items.length;
+    items.push(item);
+    setData({ items: items});
+    console.log(data);
+  };
+
+  const filterData = (data) => {
+    // returns array with filtered data
+    const filteredData = [];
+
+    if (!filters.name) {
+      return data;
+    }
+
+    for (const item of data) {
+
+      // check filters, first check not equal to default value
+      // check it applies to object we're on
+      // then pushes the item to filtered data
+      if (filters.name !== "" && item.name !== filters.name) {
+        continue;
+      }
+
+      if (filters.price !== 0 && item.price > filters.price) {
+        continue;
+      }
+
+      if (filters.type !== "" && item.type !== filters.type) {
+        continue;
+      }
+
+      if (filters.brand !== "" && item.brand !== filters.brand) {
+        continue;
+      }
+
+      filteredData.push(item);
+    }
+
+    return filteredData;
   }
 
-  const updateCounterClicked = () => {
-    setCount(count + 1);
-  }
-
   return (
-    <div>
-      <Data title={title} count={count} />
-      <button onClick={updateTitleClicked}>Update Title</button>
-      <button onClick={updateCounterClicked}>Update Counter</button>
+    <div className="container">
+      <div className="row mt-3">
+        <ItemsDisplay items={filterData(data["items"])} />
+      </div>
+      <div className="row mt-3">
+        <SearchBar updateSearchParams={updateFilters}/>
+      </div>
+      <div className="row mt-3">
+        <AddItem addItem={addItemToData}/>
+      </div>      
     </div>
   );
 }
 
-function Data(props) {
-  return (
-    <div>
-      <p>Title: {props.title}</p>
-      <p>Count: {props.count}</p>
-    </div>
-  );
-}
 
 export default App;
