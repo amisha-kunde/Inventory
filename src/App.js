@@ -11,24 +11,13 @@ function App() {
   useEffect(() => {
     const savedItems = localStorage.getItem('items');
     if (savedItems) {
-    
       setData({ items: JSON.parse(savedItems) });
     } else {
-  
-      fetch("http://localhost:3000/items")
-        .then((response) => response.json())
-        .then((fetchedData) => {
-          setData({ items: fetchedData });
-          
-          localStorage.setItem('items', JSON.stringify(fetchedData));
-        })
-        .catch((error) => {
-          console.error('Error fetching items:', error);
-        });
+      // Initialize with empty array if no data exists
+      localStorage.setItem('items', JSON.stringify([]));
     }
   }, []);
 
-  
   useEffect(() => {
     if (data.items.length > 0) {
       localStorage.setItem('items', JSON.stringify(data.items));
@@ -40,44 +29,21 @@ function App() {
   };
 
   const deleteItem = (item) => {
-    const items = [...data["items"]]; 
-    const requestOptions = {
-      method: "DELETE"
-    }
-    
-    fetch(`http://localhost:3000/items/${item.id}`, requestOptions).then(
-      (response) => {
-        if (response.ok) {
-          const filteredItems = items.filter(i => i.id !== item.id);
-          setData({ items: filteredItems });
-         
-        }
-      }
-    ).catch((error) => {
-      console.error('Error deleting item:', error);
-    });
+    const items = [...data["items"]];
+    const filteredItems = items.filter(i => i.id !== item.id);
+    setData({ items: filteredItems });
+    localStorage.setItem('items', JSON.stringify(filteredItems));
   };
 
   const addItemToData = (item) => {
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(item)
+    // Generate a unique ID for the new item
+    const newItem = {
+      ...item,
+      id: Date.now() // Using timestamp as a simple unique ID
     };
-    
-    fetch("http://localhost:3000/items", requestOptions)
-      .then((response) => response.json())
-      .then((newItem) => {
-        const updatedItems = [...data.items, newItem];
-        setData({ items: updatedItems });
-        
-      })
-      .catch((error) => {
-        console.error('Error adding item:', error);
-        
-      });    
+    const updatedItems = [...data.items, newItem];
+    setData({ items: updatedItems });
+    localStorage.setItem('items', JSON.stringify(updatedItems));
   };
 
   const clearLocalStorage = () => {
@@ -85,21 +51,7 @@ function App() {
     setData({ items: [] });
   };
 
-  
-  const syncWithServer = () => {
-    fetch("http://localhost:3000/items")
-      .then((response) => response.json())
-      .then((fetchedData) => {
-        setData({ items: fetchedData });
-        localStorage.setItem('items', JSON.stringify(fetchedData));
-      })
-      .catch((error) => {
-        console.error('Error syncing with server:', error);
-      });
-  };
-
   const filterData = (data) => {
-    
     const filteredData = [];
 
     if (!filters.name) {
@@ -107,8 +59,6 @@ function App() {
     }
 
     for (const item of data) {
-      
-
       if (filters.name !== "" && item.name !== filters.name) {
         continue;
       }
@@ -146,15 +96,8 @@ function App() {
         <AddItem addItem={addItemToData}/>
       </div>
       
-
       <div className="row mt-3">
         <div className="col">
-          <button 
-            className="btn btn-secondary me-2" 
-            onClick={syncWithServer}
-          >
-            Sync with Server
-          </button>
           <button 
             className="btn btn-warning" 
             onClick={clearLocalStorage}
